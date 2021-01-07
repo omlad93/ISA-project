@@ -151,7 +151,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Simulator.cpp" />
+    <ClCompile Include="opp.c" />
+    <ClCompile Include="sim.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="opp.h" />
+    <ClInclude Include="sim.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Computer Structure\Computer Structure\Makefile" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
