@@ -35,83 +35,86 @@ typedef struct operation {
 /* **********************************************************/
 /*  ~~~~~~~~~~~~~    FUNCTION DECLARATIONS    ~~~~~~~~~~~~  */
 /* **********************************************************/
+
+
 void* set_op_by_code(int code, operation* op);
 
 char* IO_reg_name(int reg_num);
 
+int imm_usage(operation* op);
 
+void set_operation(operation* op, int d, int t, int s, int code, char* inst);
 
-void set_operation(operation *op, int d, int t, int s, int code, char *inst);
-
-
+void mem_copy(int *origin, int* dest);
 
 //SIMP op_codes 
 
 //1
-int add(operation *op, int *registers, int pc);
+int add(operation* op, int pc);
 
 //2
-int sub(operation *op, int *registers, int pc);
+int sub(operation* op, int pc);
 
 //3
-int and(operation* op, int *registers, int pc);
+int and(operation* op, int pc);
 
 //4
-int or (operation* op, int* registers, int pc);
+int or (operation* op, int pc);
 
 //5
-int xor(operation* op, int* registers, int pc);
+int xor (operation* op, int pc);
 
 //6
-int mul(operation* op, int* registers, int pc);
+int mul(operation* op, int pc);
 
 //6
-int sll(operation* op, int* registers, int pc);
+int sll(operation* op, int pc);
 
 //7
-int sra(operation* op, int* registers, int pc);
+int sra(operation* op, int pc);
 
 //8
-int srl(operation* op, int* registers, int pc);
+int srl(operation* op, int pc);
 
 //9
-int beq(operation* op, int* registers, int pc);
+int beq(operation* op, int pc);
 
 //10
-int bne(operation* op, int* registers, int pc);
+int bne(operation* op, int pc);
 
 //11
-int blt(operation* op, int* registers, int pc);
+int blt(operation* op, int pc);
 
 //12
-int bgt(operation* op, int* registers, int pc);
+int bgt(operation* op, int pc);
 
 //13
-int ble(operation* op, int* registers, int pc);
+int ble(operation* op, int pc);
 
 //14
-int bge(operation* op, int* registers, int pc);
+int bge(operation* op, int pc);
 
 //15
-int jal(operation* op, int* registers, int pc);
+int jal(operation* op, int pc);
 
 //16
-int lw(operation* op, int* registers, int pc);
+int lw(operation* op, int pc);
 
 //17
-int sw(operation* op, int* registers, int pc);
+int sw(operation* op, int pc);
 
 //18
-int reti(operation* op, int* registers, int pc);
+int reti(operation* op, int pc);
 
 //19
-int in(operation* op, int* registers, int pc);
+int in(operation* op, int pc);
 
 //20
-int out(operation* op, int* registers, int pc);
+int out(operation* op, int pc);
 
 //21
-int halt(operation* op, int* registers, int pc);
+int halt(operation* op, int pc);
 
-//just increment pc
-int nop(operation*op, int* registers, int pc);
+//assign to $0
+int nop(operation*op, int pc);
+

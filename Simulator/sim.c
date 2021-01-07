@@ -1,26 +1,11 @@
 #include "sim.h"
-
-
-
-/* *********************************************************/
-/*  ~~~~~~~~~~~~~~~          FILES         ~~~~~~~~~~~~~~  */
-/* *********************************************************/
-
 /*
- *  imemin.txt	   -> read in file_opening
- *  dmemin.txt     -> read in file_opening
- *  diskin.txt     -> read in file_opening
- *  irq2in.txt     -> open in file_opening & parsed in parse_irq2
- *  dmemout.txt    -> write in write_dmem		//TODO
- *  regout.txt     -> write in write_reg_out
- *  trace.txt      -> write in write_trace_file
- *  hwregtrace.txt -> write in in&out operauions
- *  cycles.txt     -> write in write_cycles
- *  leds.txt       -> write in out operauion
- *  monitor.txt    -> write in write_monitor
- *  monitor.yuv    -> write in write_monitor
- *  diskout.txt    -> write in write_disk		//TODO
- */
+ code is explaind in header file to keep source file clean
+*/
+
+/* *********************************************************/
+/*  ~~~~~~~~~~~~~~~     FILES  PARSING     ~~~~~~~~~~~~~~  */
+/* *********************************************************/
 
 void parse_disk() {
 	int j;
@@ -107,104 +92,6 @@ void file_opening(char* argv[]) {
 	parse_disk();
 }
 
-
-
-
-void write_regout() {
-	fprintf(Regout, "%08X\n%08X\n%08X\n%08X\n%08X\n%08X\n%08X\n%08X\n%08X\n%08X\n%08X\n%08X\n%08X\n%08X",
-		REG[2], REG[3], REG[4], REG[5], REG[6], REG[7], REG[8], REG[9], REG[10],
-		REG[11], REG[12], REG[13], REG[14], REG[15]);
-	fclose(Regout);
-}
-
-//for debug
-int check_trace(FILE* original_trace, char* curr_line) {
-	int  status = 0;
-	if (!feof(original_trace)) {
-		char* ref_line = calloc(200, sizeof(char));
-		fgets(ref_line, 155, original_trace);
-		if (strcmp(ref_line, curr_line)) {
-			//fprintf(Trace,"\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-			status = 1;
-		}
-		else {
-			status = 0;
-		}
-	}
-	return status;
-
-
-}
-
-
-int write_trace_file(operation* op, int pc, FILE* original_trace, int debug) {
-	char* new_line = (char*)calloc(170, sizeof(char));
-	//sprintf(new_line, "CYCLE %d %03X %s %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X\n",
-	//	IOs[8], pc, Op_Mem[pc], REG[0], REG[1], REG[2], REG[3], REG[4], REG[5], REG[6], REG[7], REG[8],
-	//	REG[9], REG[10], REG[11], REG[12], REG[13], REG[14], REG[15]);
-	
-	sprintf(new_line, "%03X %s %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X\n",
-		pc, Op_Mem[pc], REG[0], REG[1], REG[2], REG[3], REG[4], REG[5], REG[6], REG[7], REG[8],
-		REG[9], REG[10], REG[11], REG[12], REG[13], REG[14], REG[15]);
-
-	fprintf(Trace, "%s", new_line);
-	if (debug) {
-		return check_trace(original_trace, new_line);
-	}
-	return 0;
-}
-
-//ignores clock resets
-void write_cycles() {
-	fprintf(Cycles, "%u\n%u"
-		, IOs[8], op_count);
-	fclose(Cycles);
-}
-
-//ignores clock resets
-//void write_leds() {
-//	fprintf(Leds, "%d %s", IOs[8], leds);
-//}
-
-void write_monitor() {
-	int x, y, pix_val;
-	char *pixel = (char*)calloc(3, sizeof(char));
-	for (y = 0; y < 288; y++) {
-		for (x = 0; x < 352; x++) {
-			pix_val = monitor[x][y];
-			sprintf(pixel, "%02X\n", pix_val);
-			fprintf(Monitor_txt,"%s",pixel);
-			//fprintf(Monitor_txt, "%s", pixel);
-			fwrite((char*)&pix_val, sizeof(char), 1, monitor_yuv);
-		}
-	}
-	//free(pixel);
-	
-}
-
-//TODO
-void write_disk() {
-	int s,b;
-	for (s = 0; s < SEC_CNT; s++) { //for each sector
-		for (b = 0; b < BLK_CNT; b ++) { //for each block
-			fprintf(Diskout, "%08X\n",
-						Disk[s][b]);
-		}
-
-	}
-}
-
-void write_dmem() {
-	int j;
-	for (j = 0; j < 4096; j++) {
-		fprintf(Memout,"%08X\n", Data_Mem[j]);
-	}
-	fclose(Memout);
-}
-
-/*
-* aloocates irq2 array, stores all clock cycles by order & return size of irq2
-*/
 int parse_irq2() {
 	char* line = (char*) calloc(MAX_LINE, sizeof(char));
 	int n, j = 0;
@@ -229,12 +116,96 @@ int parse_irq2() {
 
 }
 
+/* *********************************************************/
+/*  ~~~~~~~~~~~~~~~     FILES WRITTING     ~~~~~~~~~~~~~~  */
+/* *********************************************************/
+
+int write_trace_file(operation* op, int pc, FILE* original_trace, int debug) {
+	char* new_line = (char*)calloc(170, sizeof(char));
+	//sprintf(new_line, "CYCLE %d %03X %s %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X\n",
+	//	IOs[8], pc, Op_Mem[pc], REG[0], REG[1], REG[2], REG[3], REG[4], REG[5], REG[6], REG[7], REG[8],
+	//	REG[9], REG[10], REG[11], REG[12], REG[13], REG[14], REG[15]);
+
+	sprintf(new_line, "%03X %s %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X\n",
+		pc, Op_Mem[pc], REG[0], REG[1], REG[2], REG[3], REG[4], REG[5], REG[6], REG[7], REG[8],
+		REG[9], REG[10], REG[11], REG[12], REG[13], REG[14], REG[15]);
+
+	fprintf(Trace, "%s", new_line);
+	if (debug) {
+		return check_trace(original_trace, new_line);
+	}
+	return 0;
+}
+
+void write_cycles() {
+	fprintf(Cycles, "%u\n%u"
+		, IOs[8], op_count);
+	fclose(Cycles);
+}
+
+void write_monitor() {
+	int x, y, pix_val;
+	char *pixel = (char*)calloc(3, sizeof(char));
+	for (y = 0; y < 288; y++) {
+		for (x = 0; x < 352; x++) {
+			pix_val = monitor[x][y];
+			sprintf(pixel, "%02X\n", pix_val);
+			fprintf(Monitor_txt, "%s", pixel);
+			//fprintf(Monitor_txt, "%s", pixel);
+			fwrite((char*)&pix_val, sizeof(char), 1, monitor_yuv);
+		}
+	}
+	//free(pixel);
+
+}
+
+void write_disk() {
+	int s, b;
+	for (s = 0; s < SEC_CNT; s++) { //for each sector
+		for (b = 0; b < BLK_CNT; b++) { //for each block
+			fprintf(Diskout, "%08X\n",
+				Disk[s][b]);
+		}
+
+	}
+}
+
+void write_dmem() {
+	int j;
+	for (j = 0; j < 4096; j++) {
+		fprintf(Memout, "%08X\n", Data_Mem[j]);
+	}
+	fclose(Memout);
+}
+
+void write_regout() {
+	fprintf(Regout, "%08X\n%08X\n%08X\n%08X\n%08X\n%08X\n%08X\n%08X\n%08X\n%08X\n%08X\n%08X\n%08X\n%08X",
+		REG[2], REG[3], REG[4], REG[5], REG[6], REG[7], REG[8], REG[9], REG[10],
+		REG[11], REG[12], REG[13], REG[14], REG[15]);
+	fclose(Regout);
+}
+
+//debug - fib only
+int check_trace(FILE* original_trace, char* curr_line) {
+	int  status = 0;
+	if (!feof(original_trace)) {
+		char* ref_line = calloc(200, sizeof(char));
+		fgets(ref_line, 155, original_trace);
+		if (strcmp(ref_line, curr_line)) {
+			//fprintf(Trace,"\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+			status = 1;
+		}
+		else {
+			status = 0;
+		}
+	}
+	return status;
 
 
-
+}
 
 /* *********************************************************/
-/*  ~~~~~~~~~~~~~~~    HELPER FUNCTIONS    ~~~~~~~~~~~~~~  */
+/*  ~~~~~~~~~~~~~~~    OPERATION PARSER    ~~~~~~~~~~~~~~  */
 /* *********************************************************/
 
 int parse_immediate(char* hex) {
@@ -248,12 +219,6 @@ int parse_immediate(char* hex) {
 
 
 }
-
-int init_clock_cycle() {
-
-	return GOOD;
-}
-
 
 void parse_opcode(char* line, operation* op, int pc) {
 	int rd, rs, rt, code;
@@ -286,6 +251,15 @@ void parse_opcode(char* line, operation* op, int pc) {
 	set_operation(op, rd, rt, rs, code, line);
 }
 
+/* *********************************************************/
+/*  ~~~~~~~~~~~~~~~    CLOCKS AND IRQS     ~~~~~~~~~~~~~~  */
+/* *********************************************************/
+
+int init_clock_cycle() {
+
+	return GOOD;
+}
+
 int irq_on() {
 	int zero, one, two;
 	zero = IOs[0] & IOs[3];
@@ -295,28 +269,12 @@ int irq_on() {
 }
 
 void timer_check() {
-	if ((IOs[12] == IOs[13]) && IOs[11] ) {
+	if ((IOs[12] == IOs[13]) && IOs[11]) {
 		IOs[3] = 1; //set irq0 on
 		IOs[12] = 0;
 	}
 	else if (IOs[11]) {
 		IOs[12] ++;
-	}
-}
-
-/*
-* mange disks timer issues
-*/
-void update_hardisk_timer() {
-	//IOs[4] = 0;		 //zero irq1
-	if (IOs[17]) {	// disk is busy
-		disk_timer++;
-		if (disk_timer >= HD_CYCLE) {
-			IOs[4] = 1;  //set irq1
-			IOs[14] = 0; //clear disk command
-			IOs[17] = 0; //set disk not busy
-			disk_timer = 0;
-		}
 	}
 }
 
@@ -348,10 +306,6 @@ void check_iqs(int real_update) {
 	
 }
 
-/*
-* update clock register and input pointer.
-* if clock resets it's printed out!
-*/
 void update_clock(int real_update) {
 	if (IOs[8] == 0) { //reset
 		clk_resets++;
@@ -362,12 +316,24 @@ void update_clock(int real_update) {
 	check_iqs(real_update); // check irqs
 }
 
-
 int immediate_clk(operation* op, int iq2) {
 	if (op->rs == 1 || op->rd == 1 || op->rt == 1) {
 		update_clock(0);
 	}
 	return iq2;
+}
+
+void update_hardisk_timer() {
+	//IOs[4] = 0;		 //zero irq1
+	if (IOs[17]) {	// disk is busy
+		disk_timer++;
+		if (disk_timer >= HD_CYCLE) {
+			IOs[4] = 1;  //set irq1
+			IOs[14] = 0; //clear disk command
+			IOs[17] = 0; //set disk not busy
+			disk_timer = 0;
+		}
+	}
 }
 
 /* *********************************************************/

@@ -1,5 +1,9 @@
 #include "opp.h"
 
+/*
+ code is explaind in header file to keep source file clean
+*/
+
 void* set_op_by_code(int code, operation* op) {
 	
 	//if operations should do nothing (on assignment to $0 )
@@ -56,8 +60,6 @@ void* set_op_by_code(int code, operation* op) {
 	//if unknown opcode -> do nop
 	default:
 		return &nop;
-
-
 	}
 }
 
