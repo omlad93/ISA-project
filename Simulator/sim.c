@@ -166,7 +166,7 @@ void write_monitor(char* yuv_path) {
 			pix_val = monitor[y][x];
 			sprintf(pixel, "%02X\n", pix_val);
 			fprintf(Monitor_txt, "%s", pixel);
-			fwrite(&pix_val, sizeof(int), 1, monitor_yuv);
+			fwrite((char*)&pix_val, sizeof(char), 1, monitor_yuv);
 			//stoper(__FUNCTION__, __LINE__);
 
 		}
