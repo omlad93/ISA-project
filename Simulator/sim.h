@@ -13,7 +13,6 @@
 /* *********************************************************/
 
 #define GOOD 0
-#define of(x,y) fopen(argv[x],y)
 #define HD_CYCLE 1024
 #define is_positive_imm(hex) hex[0]==0
 #define IMM_MASK 0xFFFFF
@@ -47,11 +46,12 @@ unsigned int op_count = 0;
 /*  ~~~~~~~~~~~~~~~     FILES  PARSING     ~~~~~~~~~~~~~~  */
 /* *********************************************************/
 
-void parse_disk();
 
 void file_opening(char* argv[]);
 
-int parse_irq2();
+void parse_irq2(char* path);
+
+void parse_disk();
 
 /* *********************************************************/
 /*  ~~~~~~~~~~~~~~~     FILES WRITTING     ~~~~~~~~~~~~~~  */
@@ -61,7 +61,7 @@ int write_trace_file(operation* op, int pc, FILE* original_trace, int debug);
 
 void write_cycles();
 
-void write_monitor();
+void write_monitor(char* yuv_path);
 
 void write_disk();
 
@@ -98,4 +98,4 @@ void update_clock(int real_update);
 
 int immediate_clk(operation* op, int iq2);
 
-
+void stoper(const char* func, int line);

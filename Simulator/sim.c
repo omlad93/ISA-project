@@ -7,25 +7,6 @@
 /*  ~~~~~~~~~~~~~~~     FILES  PARSING     ~~~~~~~~~~~~~~  */
 /* *********************************************************/
 
-void parse_disk() {
-	int j;
-	char line[10];
-	int line_count = 0, sector,block;
-	for (j = 0; j < SEC_CNT;j++) {
-		memset(Disk[j], 0, BLK_CNT); //set all zeros
-	}
-	
-	while (!feof(Diskin)) {			  // read disk_in
-		fgets(line, 10, Diskin);
-		sector = (int)(line_count / BLK_CNT);
-		block = line_count % BLK_CNT;
-		Disk[sector][block] = parse_immediate(line);
-		line_count++;
-	}
-
-	//free (line);
-
-}
 
 void file_opening(char* argv[]) {
 	int j;
@@ -34,7 +15,7 @@ void file_opening(char* argv[]) {
 	Imem = fopen(argv[1], "r");
 	Dmem = fopen(argv[2], "r");
 	Diskin = fopen(argv[3], "r");
-	irq2In = fopen(argv[4], "r");
+	//irq2In = fopen(argv[4], "r"); //disabled
 	// out Files
 	Memout = fopen(argv[5], "w");
 	Regout = fopen(argv[6], "w");
@@ -43,10 +24,10 @@ void file_opening(char* argv[]) {
 	Cycles = fopen(argv[9], "w");
 	Leds = fopen(argv[10], "w");
 	Monitor_txt = fopen(argv[11], "w");
-	monitor_yuv = fopen(argv[12], "wb");
+	//monitor_yuv = fopen(argv[12], "wb");
 	Diskout = fopen(argv[13], "w");
 
-	if (Imem == NULL || Dmem == NULL || Diskin == NULL || irq2In == NULL) {
+	if (Imem == NULL || Dmem == NULL || Diskin == NULL || irq2In != NULL) { // error
 		fprintf(stderr, "Input files opening");
 		exit(1);
 	}
@@ -55,15 +36,16 @@ void file_opening(char* argv[]) {
 		fprintf(stderr, "Output files opening");
 		exit(1);
 	}
-	else if (Monitor_txt == NULL || monitor_yuv == NULL) {
+	else if (Monitor_txt == NULL || monitor_yuv != NULL) {
 		fprintf(stderr, "Monitor files opening");
 		exit(1);
 	}
 
+
 	//read Operations Memory to array
 	j = 0;
 	while (!feof(Imem)) {
-		fgets(line, 7, Imem);
+		fgets(line, MAX_LINE, Imem);
 		line[5] = '\0';
 		sprintf(Op_Mem[j], "%s", line);
 		j++;
@@ -74,11 +56,12 @@ void file_opening(char* argv[]) {
 		j++;
 	}
 	fclose(Imem);
+	printf(" [Parsed Imem] ");
 
 	//read Data Memory to array
 	j = 0;
 	while (!feof(Dmem)) {
-		fgets(line, 10, Dmem);
+		fgets(line, MAX_LINE, Dmem);
 		line[8] = '\0';
 		Data_Mem[j] = strtol(line, NULL, 16);
 		j++;
@@ -88,19 +71,28 @@ void file_opening(char* argv[]) {
 		j++;
 	}
 	fclose(Dmem);
+	printf(" [Parsed Dmem] ");
 
 	parse_disk();
+	parse_irq2(argv[4]);
 }
 
-int parse_irq2() {
-	char* line = (char*) calloc(MAX_LINE, sizeof(char));
+void parse_irq2(char* path) {
+	char line[MAX_LINE];
 	int n, j = 0;
+	printf(" [iq2 start]");
+	irq2In = fopen(path, "r");
+	//rewind(irq2In);
+	//stoper(__FUNCTION__, __LINE__);
+
 	while (!feof(irq2In)) { //check how many irq2 needed
+		//stoper(__FUNCTION__, __LINE__);
 		fgets(line, MAX_LINE, irq2In);
-		if (strcmp(line, "\n")) {
-			j++;
-		}
+		j++;
+
 	}
+	printf(" [iq2 read]");
+	//stoper(__FUNCTION__, __LINE__);
 	n = j-1; // there are n cycles with irq2
 	irq_2 = (int*)calloc(n, sizeof(int));
 	j = 0;
@@ -111,8 +103,28 @@ int parse_irq2() {
 		irq_2[j] = atoi(line);
 		j++;
 	}
-	return n;
 
+
+
+
+}
+
+
+void parse_disk() {
+	char line[10];
+	int line_count = 0, sector, block;
+	memset(Disk, 0, BLK_CNT*SEC_CNT * sizeof(int)); //set all zeros
+
+
+	while (!feof(Diskin)) {			  // read disk_in
+		fgets(line, MAX_LINE, Diskin);
+		sector = (int)(line_count / BLK_CNT);
+		block = line_count % BLK_CNT;
+		Disk[sector][block] = parse_immediate(line);
+		line_count++;
+	}
+	fclose(Diskin);
+	printf(" [Parsed Disk] ");
 
 }
 
@@ -134,7 +146,7 @@ int write_trace_file(operation* op, int pc, FILE* original_trace, int debug) {
 	if (debug) {
 		return check_trace(original_trace, new_line);
 	}
-	return 0;
+	return GOOD;
 }
 
 void write_cycles() {
@@ -143,25 +155,24 @@ void write_cycles() {
 	fclose(Cycles);
 }
 
-void write_monitor() {
+void write_monitor(char* yuv_path) {
 	int x, y, pix_val;
 	char *pixel = (char*)calloc(3, sizeof(char));
-	//debug:
-	//FILE* debug = fopen("debug_monitor.txt","w");
+	//stoper(__FUNCTION__, __LINE__);
+	monitor_yuv = fopen(yuv_path, "wb");
+
 	for (y = 0; y < 288; y++) {
 		for (x = 0; x < 352; x++) {
 			pix_val = monitor[y][x];
 			sprintf(pixel, "%02X\n", pix_val);
 			fprintf(Monitor_txt, "%s", pixel);
-			//fprintf(debug, "%s pix to line:%d\n", pixel, 352 * y + x+1);
-			fwrite((char*)&pix_val, sizeof(char), 1, monitor_yuv);
-		}
-	}
-	
-	
-	//fclose(debug);
+			fwrite(&pix_val, sizeof(int), 1, monitor_yuv);
+			//stoper(__FUNCTION__, __LINE__);
 
-	//free(pixel);
+		}
+		//stoper(__FUNCTION__, __LINE__);
+	}
+	free(pixel);
 
 }
 
@@ -196,7 +207,7 @@ int check_trace(FILE* original_trace, char* curr_line) {
 	int  status = 0;
 	if (!feof(original_trace)) {
 		char* ref_line = calloc(200, sizeof(char));
-		fgets(ref_line, 155, original_trace);
+		fgets(ref_line, MAX_LINE, original_trace);
 		if (strcmp(ref_line, curr_line)) {
 			//fprintf(Trace,"\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 			status = 1;
@@ -345,26 +356,37 @@ void update_hardisk_timer() {
 /*  ~~~~~~~~~~~~~~~          MAIN          ~~~~~~~~~~~~~~  */
 /* *********************************************************/
 
+// stoper(__FUNC__,__LINE__);
+void stoper(const char* func, int line) {
+	printf("\n>>forced to stop in \n\t%s -> line %d", func,line);
+	exit(0);
+
+}
+
 int main(int argc, char* argv[]) {
 	
 	// FILE* original_trace = fopen("tracewithcycles.txt", "r"); //debugging
 	//FILE* original_trace = fopen("fibex/trace.txt", "r"); //debugging
 
-	int st = 0;
+	int st;
 	//int old_reg[16], old_pc;
-	int read = -1, n, next_iq2=0;
+	int next_iq2=0;
 	char* line = NULL;
 	if (argc != 14) { exit(1); }
-	file_opening(argv);
-	n = parse_irq2();
 
+	printf("Welcome,\nSim is starting: \n\tOpening files");
+	file_opening(argv);
+	printf(" -> DONE;\n\t");
+	
 
 	operation* op = (operation*)calloc(1, sizeof(op));
+
 	if (!op) {
 		printf("error allocating operation struct");
 		exit(1);
 	}
-	memset(op, 0, sizeof(operation));
+
+	//memset(op, 0, sizeof(operation));
 
 
 		while ((-1 < pc) && (pc <= op_mem_max)) {//  start clock cycle
@@ -373,24 +395,32 @@ int main(int argc, char* argv[]) {
 			line = Op_Mem[pc];					 //  get line to parse & operate
 			parse_opcode(line, op, pc); 
 			st = write_trace_file(op,pc, NULL,0);
+			if (st != GOOD) {
+				printf("fib wrong");
+			}
 			pc = (op->op_code)(op, pc);
 			update_clock( 1);	 // new clock cycle - check irq
 			immediate_clk(op,next_iq2);
 
 			op_count++;	
 		}
+	
+	printf("\n\tAfter while loop");
+	//stoper(__FUNCTION__, __LINE__);
 
 	write_regout();
 	write_cycles();
 	write_dmem();
+	write_monitor(argv[12]);
+	write_disk();
 	fclose(Leds);
 	fclose(HwRT);
-	write_monitor();
-	write_disk();
 	fclose(Trace);
-	//fclose(original_trace); //
+	// // fclose(original_trace); //
 	
+	printf("\n\tFINISH loop\n");
 
+	//stoper(__FUNCTION__, __LINE__);
 	return GOOD;
 	
 
