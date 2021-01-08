@@ -5,11 +5,14 @@
 */
 
 void* set_op_by_code(int code, operation* op) {
-	
+
 	//if operations should do nothing (on assignment to $0 )
-	if (((code <= 8) || (code == 16) || (code == 19)) && (op->rd == 0)) {
-		return &nop;
+	if (((code <= 8) || (code == 16) || (code == 19))) {
+		if (op->rd == 0) {
+			return &nop;
+		}
 	}
+
 	
 	//else go by opcode
 	switch (code) {

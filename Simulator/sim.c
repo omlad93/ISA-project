@@ -146,15 +146,21 @@ void write_cycles() {
 void write_monitor() {
 	int x, y, pix_val;
 	char *pixel = (char*)calloc(3, sizeof(char));
+	//debug:
+	//FILE* debug = fopen("debug_monitor.txt","w");
 	for (y = 0; y < 288; y++) {
 		for (x = 0; x < 352; x++) {
-			pix_val = monitor[x][y];
+			pix_val = monitor[y][x];
 			sprintf(pixel, "%02X\n", pix_val);
 			fprintf(Monitor_txt, "%s", pixel);
-			//fprintf(Monitor_txt, "%s", pixel);
+			//fprintf(debug, "%s pix to line:%d\n", pixel, 352 * y + x+1);
 			fwrite((char*)&pix_val, sizeof(char), 1, monitor_yuv);
 		}
 	}
+	
+	
+	//fclose(debug);
+
 	//free(pixel);
 
 }
@@ -222,12 +228,12 @@ int parse_immediate(char* hex) {
 
 void parse_opcode(char* line, operation* op, int pc) {
 	int rd, rs, rt, code;
-	char* temp=(char*) calloc(6, sizeof(char));
+	char* temp = (char*)calloc(7,sizeof(char));
 
 	//parse op type
 	sprintf(temp, "%s", line);
 	temp[2] = '\0';
-	code = strtol(temp, NULL, 16);
+	code = strtol(&temp[0], NULL, 16);
 
 	//parse rd
 	sprintf(temp, "%s", line);
@@ -247,7 +253,6 @@ void parse_opcode(char* line, operation* op, int pc) {
 	if (rd == 1 || rs == 1 || rt == 1) { //immediate is used	
 		REG[1] = parse_immediate(Op_Mem[pc+1]);	
 	}
-	free(temp);
 	set_operation(op, rd, rt, rs, code, line);
 }
 
@@ -343,7 +348,7 @@ void update_hardisk_timer() {
 int main(int argc, char* argv[]) {
 	
 	// FILE* original_trace = fopen("tracewithcycles.txt", "r"); //debugging
-	FILE* original_trace = fopen("fibex/trace.txt", "r"); //debugging
+	//FILE* original_trace = fopen("fibex/trace.txt", "r"); //debugging
 
 	int st = 0;
 	//int old_reg[16], old_pc;
@@ -367,7 +372,7 @@ int main(int argc, char* argv[]) {
 			
 			line = Op_Mem[pc];					 //  get line to parse & operate
 			parse_opcode(line, op, pc); 
-			st = write_trace_file(op,pc, original_trace,1);
+			st = write_trace_file(op,pc, NULL,0);
 			pc = (op->op_code)(op, pc);
 			update_clock( 1);	 // new clock cycle - check irq
 			immediate_clk(op,next_iq2);
@@ -383,7 +388,7 @@ int main(int argc, char* argv[]) {
 	write_monitor();
 	write_disk();
 	fclose(Trace);
-	fclose(original_trace); //
+	//fclose(original_trace); //
 	
 
 	return GOOD;
