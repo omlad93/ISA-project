@@ -1,13 +1,30 @@
 #include "sim.h"
+
 /*
- code is explaind in header file to keep source file clean
+this module includes the main flow of the SIMP simulator
+and divided into 6 sections:
+
+1) macros:				constans to be used by implenting .c file
+2) shared variables:	to be used in opp.c and sim.c
+3) file parsing:		for parsing input files and store info in shared variables
+4) files writting:		for writting output files
+5) operation parsing:	for handling the operation needed to be simulated
+6) clocks and irqs:		for handling clock cycles and irqs handeling
+
+it was decided to store all hardware information in script and not in files.
+the decision ment to make it more accesable to and quick to operate
+'long' loading time vs 'quick' simulation time
+
 */
 
 /* *********************************************************/
 /*  ~~~~~~~~~~~~~~~     FILES  PARSING     ~~~~~~~~~~~~~~  */
 /* *********************************************************/
 
-
+/*
+A function to open and parse files.
+monitor.yuv & irq2In.txt re exulded and open seperatly
+*/
 void file_opening(char* argv[]) {
 	int j;
 	char* line = (char*)calloc(7, sizeof(char));
@@ -77,6 +94,9 @@ void file_opening(char* argv[]) {
 	parse_irq2(argv[4]);
 }
 
+/*
+A funcrion to open and parse irq2_In which will be saved as an array irq_2
+*/
 void parse_irq2(char* path) {
 	char line[MAX_LINE];
 	int n, j = 0;
@@ -109,7 +129,9 @@ void parse_irq2(char* path) {
 
 }
 
-
+/*
+A funcrion to parse diskinn and save informatin in Disk[][]
+*/
 void parse_disk() {
 	char line[10];
 	int line_count = 0, sector, block;
@@ -132,22 +154,8 @@ void parse_disk() {
 /*  ~~~~~~~~~~~~~~~     FILES WRITTING     ~~~~~~~~~~~~~~  */
 /* *********************************************************/
 
-int write_trace_file(operation* op, int pc, FILE* original_trace, int debug) {
-	char* new_line = (char*)calloc(170, sizeof(char));
-	//sprintf(new_line, "CYCLE %d %03X %s %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X\n",
-	//	IOs[8], pc, Op_Mem[pc], REG[0], REG[1], REG[2], REG[3], REG[4], REG[5], REG[6], REG[7], REG[8],
-	//	REG[9], REG[10], REG[11], REG[12], REG[13], REG[14], REG[15]);
+/* all functions here are pretty straight-forword and self explained */
 
-	sprintf(new_line, "%03X %s %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X\n",
-		pc, Op_Mem[pc], REG[0], REG[1], REG[2], REG[3], REG[4], REG[5], REG[6], REG[7], REG[8],
-		REG[9], REG[10], REG[11], REG[12], REG[13], REG[14], REG[15]);
-
-	fprintf(Trace, "%s", new_line);
-	if (debug) {
-		return check_trace(original_trace, new_line);
-	}
-	return GOOD;
-}
 
 void write_cycles() {
 	fprintf(Cycles, "%u\n%u"
@@ -202,7 +210,31 @@ void write_regout() {
 	fclose(Regout);
 }
 
-//debug - fib only
+/*
+this function has a debug feature comapring trace file written to a given referance trace
+if not debug: original_trace=NULL & debug=0
+*/
+int write_trace_file(operation* op, int pc, FILE* original_trace, int debug) {
+	char* new_line = (char*)calloc(170, sizeof(char));
+	//sprintf(new_line, "CYCLE %d %03X %s %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X\n",
+	//	IOs[8], pc, Op_Mem[pc], REG[0], REG[1], REG[2], REG[3], REG[4], REG[5], REG[6], REG[7], REG[8],
+	//	REG[9], REG[10], REG[11], REG[12], REG[13], REG[14], REG[15]);
+
+	sprintf(new_line, "%03X %s %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X\n",
+		pc, Op_Mem[pc], REG[0], REG[1], REG[2], REG[3], REG[4], REG[5], REG[6], REG[7], REG[8],
+		REG[9], REG[10], REG[11], REG[12], REG[13], REG[14], REG[15]);
+
+	fprintf(Trace, "%s", new_line);
+	if (debug) {
+		return check_trace(original_trace, new_line);
+	}
+	return GOOD;
+}
+
+/*
+use to check trace file during run compared to original trace.file
+used only in fib simulating - did'nt remove to reduce compilation error
+*/
 int check_trace(FILE* original_trace, char* curr_line) {
 	int  status = 0;
 	if (!feof(original_trace)) {
@@ -225,18 +257,21 @@ int check_trace(FILE* original_trace, char* curr_line) {
 /*  ~~~~~~~~~~~~~~~    OPERATION PARSER    ~~~~~~~~~~~~~~  */
 /* *********************************************************/
 
+/*
+A function to handle the possibilaty of negative immediate
+*/
 int parse_immediate(char* hex) {
 	int imm = (int)strtol(hex, NULL, 16);
-
-	if (!is_positive_imm(hex)) {
-		imm = ((imm & IMM_MASK) << 12) >> 12;
-	}
-
+	imm = ((imm & IMM_MASK) << 12) >> 12; //fix for negative , nop for positive
+	
 	return imm;
 
 
 }
 
+/*
+A function to parse operation from instruction memory aka IMEM
+*/
 void parse_opcode(char* line, operation* op, int pc) {
 	int rd, rs, rt, code;
 	char* temp = (char*)calloc(7,sizeof(char));
@@ -271,11 +306,26 @@ void parse_opcode(char* line, operation* op, int pc) {
 /*  ~~~~~~~~~~~~~~~    CLOCKS AND IRQS     ~~~~~~~~~~~~~~  */
 /* *********************************************************/
 
-int init_clock_cycle() {
-
-	return GOOD;
+/*
+Hard disk timer update - to be called by update_clock
+*/
+void update_hardisk_timer() {
+	//IOs[4] = 0;		 //zero irq1
+	if (IOs[17]) {	// disk is busy
+		disk_timer++;
+		if (disk_timer >= HD_CYCLE) {
+			IOs[4] = 1;  //set irq1
+			IOs[14] = 0; //clear disk command
+			IOs[17] = 0; //set disk not busy
+			disk_timer = 0;
+		}
+	}
 }
 
+/*
+Check if irq signal is on:
+if there is an irq which is both enabled and statused
+*/
 int irq_on() {
 	int zero, one, two;
 	zero = IOs[0] & IOs[3];
@@ -284,6 +334,9 @@ int irq_on() {
 	return (zero | one | two);
 }
 
+/*
+A function to check if timer reached limit - and handle it if needed
+*/
 void timer_check() {
 	if ((IOs[12] == IOs[13]) && IOs[11]) {
 		IOs[3] = 1; //set irq0 on
@@ -294,6 +347,11 @@ void timer_check() {
 	}
 }
 
+/*
+A function to check if an irq handling is needed
+handle irq2 checks and prospone if needed (immediate cycle)
+to be called from update_clock
+*/
 void check_iqs(int real_update) {
 	if (already_irq) {
 		return;
@@ -322,6 +380,11 @@ void check_iqs(int real_update) {
 	
 }
 
+/*
+update a clock cycle:
+	real   =  operation cycle
+	unreal =  immediate cycle
+*/
 void update_clock(int real_update) {
 	if (IOs[8] == 0) { //reset
 		clk_resets++;
@@ -332,6 +395,11 @@ void update_clock(int real_update) {
 	check_iqs(real_update); // check irqs
 }
 
+/*
+ clock update for operations with immediate usage
+ calling clock_update with 0 if an immediate was used
+ nothing if wasn't
+*/
 int immediate_clk(operation* op, int iq2) {
 	if (op->rs == 1 || op->rd == 1 || op->rt == 1) {
 		update_clock(0);
@@ -339,24 +407,16 @@ int immediate_clk(operation* op, int iq2) {
 	return iq2;
 }
 
-void update_hardisk_timer() {
-	//IOs[4] = 0;		 //zero irq1
-	if (IOs[17]) {	// disk is busy
-		disk_timer++;
-		if (disk_timer >= HD_CYCLE) {
-			IOs[4] = 1;  //set irq1
-			IOs[14] = 0; //clear disk command
-			IOs[17] = 0; //set disk not busy
-			disk_timer = 0;
-		}
-	}
-}
 
 /* *********************************************************/
 /*  ~~~~~~~~~~~~~~~          MAIN          ~~~~~~~~~~~~~~  */
 /* *********************************************************/
 
-// stoper(__FUNC__,__LINE__);
+/*
+Debugging function to stop run and print stop info
+in order to handle C's awful sig-fault stops
+stoper(__FUNC__,__LINE__);
+*/
 void stoper(const char* func, int line) {
 	printf("\n>>forced to stop in \n\t%s -> line %d", func,line);
 	exit(0);

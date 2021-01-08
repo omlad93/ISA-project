@@ -1,9 +1,18 @@
 #include "opp.h"
 
 /*
- code is explaind in header file to keep source file clean
+this module implemnts the header opp.c
+
+you can find in this nodule 22 functions which can be pointed by the operatin DS:
+1 for each op from the ISA and additional no-op for unreconized op_codes or assignment to $0
+the opcode number is commented above the function
+
+OUT & IN operation also simulate IO behivour
 */
 
+/*
+set the functions to be performed in the *op_code field in operation struct
+*/
 void* set_op_by_code(int code, operation* op) {
 
 	//if operations should do nothing (on assignment to $0 )
@@ -66,6 +75,9 @@ void* set_op_by_code(int code, operation* op) {
 	}
 }
 
+/*
+return the IO-register name by it's number
+*/
 char* IO_reg_name(int reg_num) {
 	switch (reg_num) {
 	case(0):
@@ -117,7 +129,9 @@ char* IO_reg_name(int reg_num) {
 	}
 }
 
-
+/*
+ return 1 if an immediate is used in the operation
+ */
 int imm_usage(operation* op) {
 	if (op->rs == 1 || op->rd == 1 || op->rt == 1) {
 		return 1;
@@ -127,6 +141,9 @@ int imm_usage(operation* op) {
 	}
 }
 
+/*
+load input values to fields in the operation struct
+*/
 void set_operation(operation* op, int d, int t, int s,int code, char* inst) {
 	op->rd = d;
 	op->rt = t;
@@ -137,6 +154,10 @@ void set_operation(operation* op, int d, int t, int s,int code, char* inst) {
 
 }
 
+/*
+copies memory from one memory elemnt to enother
+used to copy from Data Memory to Hard Disk or vise-versa
+*/
 void mem_copy(int *origin,int* dest ) {
 	int j;
 	for (j = 0; j < 128; j++) { //copy sector
@@ -144,8 +165,9 @@ void mem_copy(int *origin,int* dest ) {
 	}
 }
 
-//SIMP op_codes 
-
+/* **********************************************************/
+/*  ~~~~~~~~~~~~~    SIMP OP CODES OPERATIONS ~~~~~~~~~~~~  */
+/* **********************************************************/
 //1
 int add(operation* op, int pc) {
 	REG[op->rd] = REG[op->rs] + REG[op->rt];
@@ -213,7 +235,6 @@ int sll(operation* op, int pc) {
 		return pc + 2;
 	}
 	return (pc + 1);
-
 }
 
 //7
@@ -222,31 +243,14 @@ int sra(operation* op, int pc) {
 	if (op->imm_used) {
 		return pc + 2;
 	}return (pc + 1);
-
 }
 
 //8
 int srl(operation* op, int pc) {
-	int temp_value = REG[op->rd], temp_shift = REG[op->rt];
-	if (REG[op->rs] > 0) {
-		REG[op->rd] = REG[op->rs] >> REG[op->rt];
-	}
-	else {
-		while (REG[temp_shift] != 0) {
-			temp_value = (temp_value >> 1)&SRL_MASK;
-			if (temp_shift > 0) {
-				temp_shift--;
-			}
-			else {
-				temp_shift++;
-			}
-		}
-		REG[op->rd] = temp_value;
-	}
+	REG[op->rd] = (int)REG[op->rs] >> (int)REG[op->rt];
 	if (op->imm_used) {
 		return pc + 2;
-	}
-	return (pc + 1);
+	}return (pc + 1);
 }
 
 //9

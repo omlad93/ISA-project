@@ -1,6 +1,25 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #include <stdio.h>
 
+/*
+
+this module includes the data structures used for performing SIMP operations
+the data structre holds:
+	4 integers			 - one for each register and one as indicator of immediate use
+	1 one string (char*) - for the original line from the operation memory
+	1 function pointer	 - for the functions corresponing with the operation
+
+you can find in this nodule 22 functions which can be pointed by the operatin DS:
+1 for each op from the ISA and additional no-op for unreconized op_codes or assignment to $0
+the opcode number is commented above the function
+
+also defined here few macros used in operations
+
+declared here also extern FILE pointers and other DS simulation memories which are used by operation
+
+*/
+
+
 #define SRL_MASK 0x7FFFFFFF
 #define LSB_9BIT 0x000001FF
 #define RA 15
@@ -24,7 +43,7 @@ typedef struct operation {
 	int rs; //rs register
 	int rt; //rt register
 
-	int imm_used;
+	int imm_used; // and indicator of using immediate
 
 	char* inst; // the opcode line from Imem
 	int (*op_code)(struct operation* op, int pc); // a function pointer according to opcode
@@ -36,19 +55,35 @@ typedef struct operation {
 /*  ~~~~~~~~~~~~~    FUNCTION DECLARATIONS    ~~~~~~~~~~~~  */
 /* **********************************************************/
 
-
+/*
+set the functions to be performed in the *op_code field in operation struct
+*/
 void* set_op_by_code(int code, operation* op);
 
+/*
+return the IO-register name by it's number
+*/
 char* IO_reg_name(int reg_num);
 
+/*
+ return 1 if an immediate is used in the operation 
+ */
 int imm_usage(operation* op);
 
+/*
+load input values to fields in the operation struct
+*/
 void set_operation(operation* op, int d, int t, int s, int code, char* inst);
 
+/*
+copies memory from one memory elemnt to enother
+used to copy from Data Memory to Hard Disk or vise-versa
+*/
 void mem_copy(int *origin, int* dest);
 
-//SIMP op_codes 
-
+/* **********************************************************/
+/*  ~~~~~~~~~~~~~    SIMP OP CODES OPERATIONS ~~~~~~~~~~~~  */
+/* **********************************************************/
 //1
 int add(operation* op, int pc);
 
@@ -115,6 +150,6 @@ int out(operation* op, int pc);
 //21
 int halt(operation* op, int pc);
 
-//assign to $0
+//assign to $0 or unreconized behivour 
 int nop(operation*op, int pc);
 
