@@ -310,7 +310,6 @@ void parse_opcode(char* line, operation* op, int pc) {
 Hard disk timer update - to be called by update_clock
 */
 void update_hardisk_timer() {
-	//IOs[4] = 0;		 //zero irq1
 	if (IOs[17]) {	// disk is busy
 		disk_timer++;
 		if (disk_timer >= HD_CYCLE) {
