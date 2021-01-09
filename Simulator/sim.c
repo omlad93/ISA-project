@@ -309,10 +309,10 @@ void parse_opcode(char* line, operation* op, int pc) {
 /*
 Hard disk timer update - to be called by update_clock
 */
-void update_hardisk_timer() {
+void update_hardisk_timer(int real_update) {
 	if (IOs[17]) {	// disk is busy
 		disk_timer++;
-		if (disk_timer >= HD_CYCLE) {
+		if (disk_timer >= HD_CYCLE && real_update) {
 			IOs[4] = 1;  //set irq1
 			IOs[14] = 0; //clear disk command
 			IOs[17] = 0; //set disk not busy
@@ -336,8 +336,8 @@ int irq_on() {
 /*
 A function to check if timer reached limit - and handle it if needed
 */
-void timer_check() {
-	if ((IOs[12] == IOs[13]) && IOs[11]) {
+void timer_check(int real_update) {
+	if ((IOs[12] >= IOs[13]) && IOs[11] && real_update) {
 		IOs[3] = 1; //set irq0 on
 		IOs[12] = 0;
 	}
@@ -367,11 +367,12 @@ void check_iqs(int real_update) {
 	else {
 		IOs[5] = 0;
 	}
+
 	if (irq_on()) {
 		IOs[7] = pc; //set return adress
 		already_irq = 1;
 		pc = IOs[6];
-		irq_2++;    // move array to next index
+		irq_2++;    // move array to next index only if it was from iq2
 	}
 
 
@@ -389,8 +390,8 @@ void update_clock(int real_update) {
 		clk_resets++;
 	}
 	IOs[8] ++; //update clock cycle
-	update_hardisk_timer(); //update hardisk timer
-	timer_check();			//check timer for irqs
+	update_hardisk_timer(real_update); //update hardisk timer
+	timer_check(real_update);			//check timer for irqs
 	check_iqs(real_update); // check irqs
 }
 
@@ -444,18 +445,17 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 
-	//memset(op, 0, sizeof(operation));
+	//memset(op, 0, sizeof(operation))
 
 	printf("\n\tStarting Operation sequance.\n\t");
 
 	while ((-1 < pc) && (pc <= op_mem_max)) {//  start clock cycle
 
-			
 		line = Op_Mem[pc];					 //  get line to parse & operate
 		parse_opcode(line, op, pc); 
 		write_trace_file(op,pc, NULL,0);
 		pc = (op->op_code)(op, pc);
-		update_clock( 1);	 // new clock cycle - check irq
+		update_clock(1);	 // new clock cycle - check irq
 		immediate_clk(op,next_iq2);
 		op_count++;	
 	}

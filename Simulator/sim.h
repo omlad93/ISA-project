@@ -132,7 +132,7 @@ void parse_opcode(char* line, operation* op, int pc);
 /*
 Hard disk timer update - to be called by update_clock
 */
-void update_hardisk_timer();
+void update_hardisk_timer(int real_update);
 
 /*
 Check if irq signal is on: 
@@ -143,7 +143,7 @@ int irq_on();
 /*
 A function to check if timer reached limit - and handle it if needed
 */
-void timer_check();
+void timer_check(int real_update);
 
 /*
 A function to check if an irq handling is needed
