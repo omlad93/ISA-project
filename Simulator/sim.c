@@ -427,14 +427,13 @@ int main(int argc, char* argv[]) {
 	
 	// FILE* original_trace = fopen("tracewithcycles.txt", "r"); //debugging
 	//FILE* original_trace = fopen("fibex/trace.txt", "r"); //debugging
+	//int st;
 
-	int st;
-	//int old_reg[16], old_pc;
 	int next_iq2=0;
 	char* line = NULL;
 	if (argc != 14) { exit(1); }
 
-	printf("Welcome,\nSim is starting: \n\tOpening files");
+	printf("Welcome,\nSIMP Simulator is starting: \n\tOpening files");
 	file_opening(argv);
 	printf(" -> DONE;\n\t");
 	
@@ -448,25 +447,23 @@ int main(int argc, char* argv[]) {
 
 	//memset(op, 0, sizeof(operation));
 
+	printf("\n\tStarting Operation sequance.\n\t");
 
-		while ((-1 < pc) && (pc <= op_mem_max)) {//  start clock cycle
+	while ((-1 < pc) && (pc <= op_mem_max)) {//  start clock cycle
 
 			
-			line = Op_Mem[pc];					 //  get line to parse & operate
-			parse_opcode(line, op, pc); 
-			st = write_trace_file(op,pc, NULL,0);
-			if (st != GOOD) {
-				printf("fib wrong");
-			}
-			pc = (op->op_code)(op, pc);
-			update_clock( 1);	 // new clock cycle - check irq
-			immediate_clk(op,next_iq2);
-
-			op_count++;	
-		}
+		line = Op_Mem[pc];					 //  get line to parse & operate
+		parse_opcode(line, op, pc); 
+		write_trace_file(op,pc, NULL,0);
+		pc = (op->op_code)(op, pc);
+		update_clock( 1);	 // new clock cycle - check irq
+		immediate_clk(op,next_iq2);
+		op_count++;	
+	}
+	if (pc != -1) { printf("  > Operation sequance finished [pc=%d]\n\t", pc); }
 	
-	printf("\n\tAfter while loop");
 	//stoper(__FUNCTION__, __LINE__);
+	printf("\n\tWriting files and free memory");
 
 	write_regout();
 	write_cycles();
@@ -476,11 +473,10 @@ int main(int argc, char* argv[]) {
 	fclose(Leds);
 	fclose(HwRT);
 	fclose(Trace);
-	// // fclose(original_trace); //
+	// fclose(original_trace); //debug
 	
-	printf("\n\tFINISH loop\n");
+	printf("\n\n\tSimulator finished running.\n ");
 
-	//stoper(__FUNCTION__, __LINE__);
 	return GOOD;
 	
 

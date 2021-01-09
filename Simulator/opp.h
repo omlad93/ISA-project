@@ -81,6 +81,13 @@ used to copy from Data Memory to Hard Disk or vise-versa
 */
 void mem_copy(int *origin, int* dest);
 
+/*
+A function to make sure that mem copy between Disk & Data-Mem will go clean
+if one of the pointer is set to an addresss which will cause a problem - it is shifter to the mximum address which won't
+to be called before mem_copy
+*/
+void fix_disk_cpy(unsigned int disk_sec, unsigned int dmem_loc, int* dmem_address, int* disk_address);
+
 /* **********************************************************/
 /*  ~~~~~~~~~~~~~    SIMP OP CODES OPERATIONS ~~~~~~~~~~~~  */
 /* **********************************************************/

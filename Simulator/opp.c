@@ -21,6 +21,9 @@ void* set_op_by_code(int code, operation* op) {
 			return &nop;
 		}
 	}
+	else if ((op->rd > 15) || (op->rs > 15) || (op->rt > 15)) {
+		return &nop;
+	}
 
 	
 	//else go by opcode
@@ -162,6 +165,21 @@ void mem_copy(int *origin,int* dest ) {
 	int j;
 	for (j = 0; j < 128; j++) { //copy sector
 		dest[j] = origin[j];
+	}
+}
+
+/*
+A function to make sure that mem copy between Disk & Data-Mem will go clean
+if one of the pointer is set to an addresss which will cause a problem - it is shifter to the mximum address which won't
+to be called before mem_copy
+*/
+void fix_disk_cpy(unsigned int disk_sec, unsigned int dmem_loc, int* dmem_address, int* disk_address) {
+	int max_dmem_to_cpy = 4096 - 128;
+	if (dmem_loc > max_dmem_to_cpy) {
+		dmem_address = &Data_Mem[max_dmem_to_cpy];
+	}
+	if (disk_sec > 127) {
+		disk_address = Disk[127];
 	}
 }
 
@@ -338,8 +356,10 @@ int jal(operation* op,  int pc) {
 //16
 int lw(operation* op,  int pc) {
 	//char value[MAX_LINE + 1];
-	int memory_line = (REG[op->rs] + REG[op->rt])%4096;
-	REG[op->rd] = Data_Mem[memory_line];
+	int memory_line = (REG[op->rs] + REG[op->rt]);
+	if (memory_line > 4095 || memory_line <0) {
+		memory_line = 4095; //do not allow higher addresses 
+	}	REG[op->rd] = Data_Mem[memory_line];
 	if (op->imm_used) {
 		return pc + 2;
 	}
@@ -349,7 +369,7 @@ int lw(operation* op,  int pc) {
 //17
 int sw(operation* op,  int pc) {
 	int memory_line = (REG[op->rs] + REG[op->rt]);
-	if (memory_line > 4095) {
+	if (memory_line > 4095 || memory_line <0) {
 		memory_line = 4095; //do not allow higher addresses 
 	}
 	Data_Mem[memory_line] = REG[op->rd];
@@ -414,14 +434,17 @@ int out(operation* op, int pc) {
 	else if (io_address == 14) {
 		if (!IOs[17]) { // if disk is free
 			if (IOs[14] == 1) { // if sholut write
-				//IOs[16] = (unsigned int) &(Disk_mem[IOs[15]]); //put in disk-buffer beggining address of Disk[sector]
 				dest = Disk[IOs[15]];
 				orgn = &Data_Mem[IOs[16]];
+				
+				fix_disk_cpy(IOs[15], IOs[16], orgn, dest);
 				mem_copy(orgn, dest);
 			}
-			else  if (IOs[14] == 2) { // if shold read
+			else  if (IOs[14] == 2) { // if shold read			
 				dest = &Data_Mem[IOs[16]];
 				orgn = Disk[IOs[15]];
+
+				fix_disk_cpy(IOs[15], IOs[16], dest, orgn);
 				mem_copy(orgn, dest);
 			}
 		}
@@ -433,8 +456,11 @@ int out(operation* op, int pc) {
 	return (pc + 1);
 }
 
+
+
 //21
 int halt(operation* op, int pc) {
+	printf("  > reached halt function [pc=%d]\n\t", pc);
 	return -1;
 
 }
