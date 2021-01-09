@@ -58,6 +58,7 @@ lable* add_lable(lable* head, char* lable_name, int address) {
 		return head;
 }
 
+/*Creates a single lable*/
 lable* create_single_lable(char *line, int pc, lable *lable_list) {
 	int i;
 	char *temp;
@@ -76,7 +77,6 @@ lable* create_single_lable(char *line, int pc, lable *lable_list) {
 	lable_list = add_lable(lable_list, temp, pc);
 	return lable_list;
 }
-
 
 /*Finds the pc of the lable*/
 int find_lable_pc(lable *head, char *lable_name) {
@@ -205,6 +205,7 @@ char* get_rd(char *line, char *rd) {
 	strcpy(rd, line);
 	return &line[i + 1];
 }
+
 /*Findes the name of the $rs register and returns a pointer to the next index in the line after the the $rs register*/
 char* get_rs(char *line, char *rs) {
 	int i = 0;
@@ -215,6 +216,7 @@ char* get_rs(char *line, char *rs) {
 	strcpy(rs, line);
 	return &line[i + 1];
 }
+
 /*Findes the name of the $rt register and returns a pointer to the next index in the line after the the $rt register*/
 char* get_rt(char *line, char *rt) {
 	int i = 0;
@@ -225,6 +227,7 @@ char* get_rt(char *line, char *rt) {
 	strcpy(rt, line);
 	return &line[i + 1];
 }
+
 /*Findes the value of $imm*/
 char* get_imm(char *line, char *imm) {
 	int i = 0;
@@ -235,6 +238,7 @@ char* get_imm(char *line, char *imm) {
 	strcpy(imm, line);
 	return &line[i + 1];
 }
+
 /*Reads '.word' command line*/
 void read_word_line(char *line, int *dmem_arr) {
 	char *first, address[15], data[15];
@@ -283,6 +287,7 @@ void read_word_line(char *line, int *dmem_arr) {
 	dmem_arr[address_int] = data_int;
 }
 
+/*Check if the instruction is using immidiate*/
 short int is_using_imm(instruction *inst) {
 	if (strcmp(inst->rt, "imm") == 0 || strcmp(inst->rs, "imm") == 0 || strcmp(inst->rd, "imm") == 0) {
 		return 1;
@@ -290,7 +295,7 @@ short int is_using_imm(instruction *inst) {
 	return 0;
 }
 
-/*Creates regulat instruction*/
+/*Creates regular instruction*/
 void read_ragular_instruction(char *line, instruction *inst) {
 	char *start;
 	int i;
@@ -375,6 +380,7 @@ instruction** create_memin_arr(FILE *program, lable *lable_list, int *dmem_arr) 
 	}
 	return memin_arr;
 }
+
 /*Updates the memory array with the labels pc*/
 void update_labels(instruction **memin_arr, lable *lable_list) {
 	int i, pc;
@@ -515,9 +521,9 @@ void print_register_num(FILE *imem, char *reg) {
 	}
 }
 
+/*Creates the imemin.txt and dmemin.txt files*/
 void print_to_file(instruction **memin_arr, int *dmem_arr, FILE *imem, FILE *dmem) {
 	int i, imm_int;
-	//char *imm;
 
 	//create imemin
 	for (i = 0; i < 1024; i++) {
@@ -589,16 +595,16 @@ int main(int argc, char* argv[]) {
 	int *dmem_arr;
 
 	program = fopen(argv[1], "r");
-	lable_list = create_lable_list(program);
+	lable_list = create_lable_list(program); //the first run - creates the lable list
 
 	rewind(program);
 	dmem_arr = (int *)calloc(4096, sizeof(int));
-	memin_arr = create_memin_arr(program, lable_list, dmem_arr);
-	update_labels(memin_arr, lable_list);
+	memin_arr = create_memin_arr(program, lable_list, dmem_arr);// the second run - creates the imem and dmem datat structures
+	update_labels(memin_arr, lable_list); // update the lables to their pc
 
 	imem = fopen(argv[2], "w");
 	dmem = fopen(argv[3], "w");
-	print_to_file(memin_arr, dmem_arr, imem, dmem);
+	print_to_file(memin_arr, dmem_arr, imem, dmem); // creates the output files
 
 	fclose(program);
 	fclose(imem);
