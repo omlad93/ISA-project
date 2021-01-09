@@ -75,6 +75,7 @@ lable* create_single_lable(char *line, int pc, lable *lable_list) {
 	}
 	temp[i] = '\0';
 	lable_list = add_lable(lable_list, temp, pc);
+	temp[i] = ':';
 	return lable_list;
 }
 
