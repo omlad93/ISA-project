@@ -166,6 +166,7 @@ void mem_copy(int *origin,int* dest ) {
 	for (j = 0; j < 128; j++) { //copy sector
 		dest[j] = origin[j];
 	}
+	IOs[17] = 1; //set HD as busy
 }
 
 /*
@@ -383,8 +384,11 @@ int sw(operation* op,  int pc) {
 //18
 int reti(operation* op,  int pc) {
 	pc = IOs[7];
+	// zero irq status
 	already_irq = 0;
-	IOs[3] = 0; IOs[4] = 0; IOs[5] = 0;
+	IOs[3] = 0;
+	IOs[4] = 0;
+	IOs[5] = 0;
 	return pc;
 }
 
@@ -431,9 +435,10 @@ int out(operation* op, int pc) {
 	
 	}
 	//DISK WRITE
-	else if (io_address == 14) {
+	else if (io_address == 14) { // status
+
 		if (!IOs[17]) { // if disk is free
-			if (IOs[14] == 1) { // if sholut write
+			if (IOs[14] == 1) { // if sholud write
 				dest = Disk[IOs[15]];
 				orgn = &Data_Mem[IOs[16]];
 				
